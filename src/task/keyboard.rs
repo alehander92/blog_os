@@ -1,6 +1,8 @@
 use crate::{print, println};
+use alloc::string::{String, ToString};
 use conquer_once::spin::OnceCell;
 use core::{
+    future::Future,
     pin::Pin,
     task::{Context, Poll},
 };
@@ -80,4 +82,56 @@ pub async fn print_keypresses() {
             }
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct Shell {}
+
+#[derive(Debug, Clone)]
+pub enum ShellResult {
+    Raw(String),
+    Error(String),
+}
+
+impl Shell {
+    pub async fn run(&mut self, line: &str) -> ShellResult {
+        if line == "pwd" {
+            ShellResult::Raw("/".to_string())
+        } else {
+            ShellResult::Error("not recognized".to_string())
+        }
+    }
+}
+pub async fn shell() {
+    let mut shell = Shell {};
+    let mut scancodes = ScancodeStream::new();
+    print!("os> welcome");
+    loop {
+        let line = read_line(&mut scancodes).await;
+        let res = shell.run(&line).await;
+        println!("os> {res:?}");
+    }
+}
+
+pub async fn read_line(scancodes: &mut ScancodeStream) -> String {
+    let mut keyboard = Keyboard::new(layouts::Us104Key, ScancodeSet1, HandleControl::Ignore);
+    let mut result = String::from("");
+    while let Some(scancode) = scancodes.next().await {
+        if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
+            if let Some(key) = keyboard.process_keyevent(key_event) {
+                match key {
+                    DecodedKey::Unicode(character) => {
+                        if character == '\n' {
+                            break;
+                        }
+                        result.push(character);
+                    }
+                    DecodedKey::RawKey(_key) => {
+                        // print!("{:?}", key)
+                    }
+                }
+            }
+        }
+    }
+    return result;
 }

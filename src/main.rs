@@ -30,9 +30,21 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     #[cfg(test)]
     test_main();
 
+    // let mut i = 0;
+    // loop {
+    //     if i % 2 == 0 {
+    //         sync_example_task();
+    //     } else {
+    //         sync_other_task();
+    //     }
+    //     // TODO: sleep
+    //     loop_wait(10_000_000);
+    //     i += 1;
+    // }
     let mut executor = Executor::new();
     executor.spawn(Task::new(example_task()));
-    executor.spawn(Task::new(keyboard::print_keypresses()));
+    executor.spawn(Task::new(keyboard::shell()));
+    // executor.spawn(Task::new(keyboard::print_keypresses()));
     executor.run();
 }
 
@@ -57,6 +69,28 @@ async fn async_number() -> u32 {
 async fn example_task() {
     let number = async_number().await;
     println!("async number: {}", number);
+}
+
+fn load_number() -> u64 {
+    let number = 2;
+    return number;
+}
+
+fn sync_example_task() {
+    let number = load_number();
+    println!("number: {}", number);
+}
+
+fn sync_other_task() {
+    println!("other task");
+}
+
+// in place of real idling sleep for now
+pub fn loop_wait(iterations: u64) {
+    let mut sum = 0;
+    for i in 0..iterations {
+        sum += i;
+    }
 }
 
 #[test_case]
