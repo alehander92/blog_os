@@ -18,7 +18,6 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     use blog_os::memory::{self, BootInfoFrameAllocator};
     use x86_64::VirtAddr;
 
-    println!("Hello World{}", "!");
     blog_os::init();
 
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
@@ -42,7 +41,7 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     //     i += 1;
     // }
     let mut executor = Executor::new();
-    executor.spawn(Task::new(example_task()));
+    // executor.spawn(Task::new(example_task()));
     executor.spawn(Task::new(keyboard::shell()));
     // executor.spawn(Task::new(keyboard::print_keypresses()));
     executor.run();

@@ -1,3 +1,4 @@
+use crate::vga_buffer::WRITER;
 use crate::{print, println};
 use alloc::string::{String, ToString};
 use conquer_once::spin::OnceCell;
@@ -105,13 +106,16 @@ impl Shell {
 pub async fn shell() {
     let mut shell = Shell {};
     let mut scancodes = ScancodeStream::new();
-    print!("os> welcome");
+    println!("os> welcome");
     loop {
+        print!("user> ");
         let line = read_line(&mut scancodes).await;
         let res = shell.run(&line).await;
         println!("os> {res:?}");
     }
 }
+
+const BACKSPACE_ASCII_CODE: u8 = 8;
 
 pub async fn read_line(scancodes: &mut ScancodeStream) -> String {
     let mut keyboard = Keyboard::new(layouts::Us104Key, ScancodeSet1, HandleControl::Ignore);
@@ -122,12 +126,20 @@ pub async fn read_line(scancodes: &mut ScancodeStream) -> String {
                 match key {
                     DecodedKey::Unicode(character) => {
                         if character == '\n' {
+                            print!("{}", character);
                             break;
+                        } else if character as u8 == BACKSPACE_ASCII_CODE {
+                            let mut writer = WRITER.lock();
+                            writer.clear_last_n_characters(1);
+                            result.pop();
+                        } else {
+                            // print!("{}", character as u8);
+                            print!("{}", character);
+                            result.push(character);
                         }
-                        result.push(character);
                     }
                     DecodedKey::RawKey(_key) => {
-                        // print!("{:?}", key)
+                        print!("[RAW {:?}]", key)
                     }
                 }
             }

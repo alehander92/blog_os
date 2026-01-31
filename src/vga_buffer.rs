@@ -11,6 +11,10 @@ lazy_static! {
         column_position: 0,
         color_code: ColorCode::new(Color::Yellow, Color::Black),
         buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
+        original_chars: [[ScreenChar {
+            ascii_character: b' ',
+            color_code: ColorCode(0),
+        }; BUFFER_WIDTH]; BUFFER_HEIGHT],
     });
 }
 
@@ -76,6 +80,7 @@ pub struct Writer {
     column_position: usize,
     color_code: ColorCode,
     buffer: &'static mut Buffer,
+    original_chars: [[ScreenChar; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
 impl Writer {
@@ -94,10 +99,13 @@ impl Writer {
                 let col = self.column_position;
 
                 let color_code = self.color_code;
-                self.buffer.chars[row][col].write(ScreenChar {
+                let char = ScreenChar {
                     ascii_character: byte,
                     color_code,
-                });
+                };
+                self.original_chars[row][col] = char.clone();
+                self.buffer.chars[row][col].write(char);
+
                 self.column_position += 1;
             }
         }
@@ -138,8 +146,26 @@ impl Writer {
             color_code: self.color_code,
         };
         for col in 0..BUFFER_WIDTH {
+            self.original_chars[row][col] = blank;
             self.buffer.chars[row][col].write(blank);
         }
+    }
+
+    pub fn clear_last_n_characters(&mut self, n: usize) {
+        let blank = ScreenChar {
+            ascii_character: b' ',
+            color_code: self.color_code,
+        };
+        let row = BUFFER_HEIGHT - 1;
+        for col in (self.column_position - n + 1)..self.column_position {
+            if col < BUFFER_WIDTH - 1 {
+                self.original_chars[row][col] = self.original_chars[row][col + 1];
+                self.buffer.chars[row][col].write(self.original_chars[row][col].clone());
+            }
+        }
+        self.column_position -= n;
+        self.original_chars[row][self.column_position] = blank.clone();
+        self.buffer.chars[row][self.column_position].write(blank);
     }
 }
 
