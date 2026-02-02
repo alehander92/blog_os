@@ -1,3 +1,35 @@
+### toy
+
+based on Blog OS by Philipp Oppermann: full credit to him and all other blog os maintainers/contributors!
+
+Also credit to overall rust community and also to the osdev commmunity and for some friends/colleagues for help!
+
+plan
+
+* simple shell and "programs" tasks; for now based on the blog os's cooperative async/await support or just as functions
+  eventually preemption/more advanced processes/userland? maybe in the future
+* db-like/file abstraction: first in memory; eventually for support for hard disk as well
+* simple chat program: some kind of remote support: in VM(by mapped memory or socket?) or real: TCP/IP (custom manual or library like [smoltcp](https://github.com/smoltcp-rs/smoltcp) used in [the Moros OS](https://moros.cc/))
+* eventually: others
+
+### shell:
+
+```
+user> pwd
+os>
+-------
+@first
+
+user> write groceries.text bread;fish
+os> ok: file written
+user> ls
+os> ls
+-------
+| groceries | Text | 10 |
+```
+
+original README from blog-os: README of the branch after the 12th post:
+
 # Blog OS (Async/Await)
 
 [![Build Status](https://github.com/phil-opp/blog_os/workflows/Code/badge.svg?branch=post-12)](https://github.com/phil-opp/blog_os/actions?query=workflow%3A%22Code%22+branch%3Apost-12)
